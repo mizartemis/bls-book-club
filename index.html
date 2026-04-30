@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>블스 · 우리들의 독서 모임</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  @import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&display=swap');
+
+  body {
+    font-family: 'Gowun Batang', 'Nanum Myeongjo', serif;
+    background:
+      linear-gradient(rgba(252, 246, 235, 0.88), rgba(245, 232, 213, 0.88)),
+      url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=1920&q=80') center/cover fixed;
+    color: #3d2f24;
+    min-height: 100vh;
+    line-height: 1.7;
+  }
+
+  /* ===== Header ===== */
+  header {
+    position: relative;
+    height: 420px;
+    background:
+      linear-gradient(rgba(60, 40, 25, 0.55), rgba(40, 25, 15, 0.65)),
+      url('https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=1920&q=80') center/cover;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #fff8ec;
+    box-shadow: 0 4px 30px rgba(0,0,0,.2);
+  }
+  header::before {
+    content: "📖  ☕  👓  🪟";
+    position: absolute;
+    top: 22px;
+    font-size: 1.6rem;
+    letter-spacing: 18px;
+    opacity: .85;
+  }
+  header h1 {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 5rem;
+    font-weight: 800;
+    letter-spacing: 18px;
+    text-shadow: 2px 3px 12px rgba(0,0,0,.6);
+    margin-bottom: 14px;
+  }
+  header p.subtitle {
+    font-size: 1.15rem;
+    letter-spacing: 6px;
+    opacity: .92;
+    font-style: italic;
+  }
+  header p.quote {
+    margin-top: 22px;
+    font-size: 1rem;
+    max-width: 620px;
+    padding: 12px 20px;
+    border-top: 1px solid rgba(255,255,255,.4);
+    border-bottom: 1px solid rgba(255,255,255,.4);
+    opacity: .9;
+  }
+
+  /* ===== Music control ===== */
+  .music-box {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    background: rgba(255, 248, 235, 0.95);
+    border: 2px solid #8b6f47;
+    border-radius: 50px;
+    padding: 10px 18px;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 14px rgba(0,0,0,.2);
+    cursor: pointer;
+    user-select: none;
+    transition: all .3s;
+  }
+  .music-box:hover { transform: scale(1.05); background: #fff8ec; }
+  .music-box span { font-size: .95rem; color: #5a3e22; font-weight: 700; }
+  .music-icon { font-size: 1.4rem; animation: spin 4s linear infinite; }
+  .music-icon.paused { animation-play-state: paused; }
+  @keyframes spin { from {transform: rotate(0)} to {transform: rotate(360deg)} }
+
+  /* ===== Navigation ===== */
+  nav {
+    background: #fff8ec;
+    border-bottom: 3px double #b08956;
+    padding: 16px 0;
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  nav a {
+    text-decoration: none;
+    color: #5a3e22;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-weight: 700;
+    transition: all .3s;
+    font-size: .98rem;
+  }
+  nav a:hover {
+    background: #b08956;
+    color: #fff8ec;
+    transform: translateY(-2px);
+  }
+
+  /* ===== Layout ===== */
+  main {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 0 24px;
+  }
+  section {
+    background: rgba(255, 250, 240, 0.96);
+    border-radius: 18px;
+    padding: 40px;
+    margin-bottom: 50px;
+    box-shadow: 0 6px 24px rgba(80, 50, 20, 0.12);
+    border: 1px solid #e8d4b0;
+  }
+  h2 {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 2rem;
+    color: #5a3e22;
+    margin-bottom: 8px;
+    border-bottom: 2px solid #b08956;
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  h2 .icon { font-size: 2.2rem; }
+  .section-desc {
+    color: #8b6f47;
+    margin-bottom: 28px;
+    font-style: italic;
+  }
+
+  /* ===== Reviews ===== */
+  .review-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 22px;
+  }
+  .review-card {
+    background: #fffdf8;
+    border-left: 6px solid #b08956;
+    padding: 22px;
+    border-radius: 12px;
+    box-shadow: 2px 4px 12px rgba(0,0,0,.06);
+    transition: all .3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .review-card::before {
+    content: "❝";
+    position: absolute;
+    top: -10px;
+    right: 12px;
+    font-size: 5rem;
+    color: rgba(176, 137, 86, 0.15);
+    font-family: serif;
+  }
+  .review-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 4px 8px 20px rgba(0,0,0,.12);
+  }
+  .review-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: .85rem;
+    color: #a07a4a;
+    margin-bottom: 8px;
+  }
+  .review-card h3 {
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 1.25rem;
+    margin-bottom: 6px;
+    color: #5a3e22;
+  }
+  .review-card .author {
+    font-size: .9rem;
+    color: #8b6f47;
+    margin-bottom: 12px;
+  }
+  .review-card p { font-size: .96rem; color: #4a3826; }
+  .review-card .member {
+    margin-top: 14px;
+    text-align: right;
+    font-size: .88rem;
+    color: #8b6f47;
+    font-weight: 700;
+  }
+
+  /* ===== Form ===== */
+  form {
+    display: grid;
+    gap: 12px;
+    margin-top: 24px;
+    background: #fdf6e8;
+    padding: 22px;
+    border-radius: 12px;
+    border: 1px dashed #b08956;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  input, textarea, select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #cfa978;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: .95rem;
+    background: #fffdf8;
+    color: #3d2f24;
+  }
+  input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #8b6f47;
+    box-shadow: 0 0 0 3px rgba(176,137,86,.2);
+  }
+  textarea { resize: vertical; min-height: 80px; }
+  button {
+    background: linear-gradient(135deg, #b08956, #8b6f47);
+    color: #fff8ec;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    transition: all .3s;
+    justify-self: start;
+  }
+  button:hover {
+    background: linear-gradient(135deg, #8b6f47, #5a3e22);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  }
+  .delete-btn {
+    background: #c47a5e;
+    color: #fff;
+    border: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: .8rem;
+    letter-spacing: 0;
+    font-family: inherit;
+    transition: all .2s;
+  }
+  .delete-btn:hover {
+    background: #a04a30;
+    transform: scale(1.05);
+  }
+
+  /* ===== Recommended Books ===== */
+  .book-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 24px;
+  }
+  .book-card {
+    text-align: center;
+    background: #fffdf8;
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+    transition: all .3s;
+    position: relative;
+  }
+  .book-card:hover { transform: translateY(-6px) rotate(-1deg); }
+  .book-card .delete-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+  }
+  .book-cover {
+    width: 130px;
+    height: 190px;
+    margin: 0 auto 14px;
+    background: linear-gradient(135deg, #c9a878, #8b6f47);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff8ec;
+    font-family: 'Nanum Myeongjo', serif;
+    font-weight: 800;
+    text-align: center;
+    padding: 14px;
+    line-height: 1.3;
+    box-shadow: 4px 4px 12px rgba(0,0,0,.25);
+    position: relative;
+    font-size: 1rem;
+  }
+  .book-cover::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255,255,255,.3);
+  }
+  .book-card h4 { font-size: 1.05rem; color: #5a3e22; margin-bottom: 4px; }
+  .book-card .book-author { font-size: .88rem; color: #8b6f47; margin-bottom: 8px; }
+  .book-card .book-comment { font-size: .85rem; color: #6a5236; margin: 8px 0; padding: 0 6px; font-style: italic; }
+  .book-card .recommender {
+    display: inline-block;
+    background: #f0e0c0;
+    color: #5a3e22;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: .8rem;
+    margin-top: 6px;
+  }
+
+  /* ===== Daily Sharing ===== */
+  .daily-list { display: grid; gap: 18px; }
+  .daily-item {
+    background: linear-gradient(to right, #fff8ec, #fdf6e8);
+    padding: 20px 24px;
+    border-radius: 12px;
+    border-left: 4px solid #d4a574;
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 18px;
+    align-items: start;
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+  }
+  .daily-emoji { font-size: 3rem; text-align: center; line-height: 1; }
+  .daily-content .daily-meta { color: #a07a4a; font-size: .85rem; margin-bottom: 6px; }
+  .daily-content p { color: #4a3826; }
+
+  /* ===== Fee Table ===== */
+  .fee-summary {
+    background: linear-gradient(135deg, #fdf6e8, #f5e8d0);
+    padding: 22px;
+    border-radius: 12px;
+    margin-bottom: 22px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    text-align: center;
+  }
+  .fee-summary .summary-card {
+    background: #fffdf8;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid #e8d4b0;
+  }
+  .fee-summary .summary-card .label { font-size: .85rem; color: #8b6f47; margin-bottom: 4px; }
+  .fee-summary .summary-card .value { font-size: 1.4rem; font-weight: 800; color: #5a3e22; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fffdf8;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  }
+  th, td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid #f0e0c0;
+  }
+  th {
+    background: #b08956;
+    color: #fff8ec;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  tr:hover td { background: #fdf6e8; }
+  td.amount { font-weight: 700; color: #5a3e22; text-align: right; }
+  td.amount.negative { color: #b04a2e; }
+  td.amount.positive { color: #4a7a3a; }
+  td.action-cell { text-align: center; width: 80px; }
+
+  /* ===== Footer ===== */
+  footer {
+    text-align: center;
+    padding: 40px 20px;
+    background: rgba(60, 40, 25, 0.92);
+    color: #f5e8d0;
+    margin-top: 60px;
+  }
+  footer p { margin: 6px 0; }
+  footer .icons { font-size: 1.5rem; letter-spacing: 12px; margin-bottom: 14px; }
+
+  /* ===== Decorative window ===== */
+  .window-deco {
+    position: relative;
+    background:
+      linear-gradient(rgba(255,248,236,.4), rgba(255,248,236,.4)),
+      url('https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200&q=80') center/cover;
+    height: 200px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    border: 8px solid #8b6f47;
+    box-shadow: inset 0 0 0 4px #fff8ec, 0 6px 18px rgba(0,0,0,.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .window-deco::before, .window-deco::after { content: ''; position: absolute; background: #8b6f47; }
+  .window-deco::before { top: 0; bottom: 0; left: 50%; width: 4px; transform: translateX(-50%); }
+  .window-deco::after { left: 0; right: 0; top: 50%; height: 4px; transform: translateY(-50%); }
+  .window-deco span {
+    background: rgba(60,40,25,.7);
+    color: #fff8ec;
+    padding: 8px 24px;
+    border-radius: 50px;
+    font-family: 'Nanum Myeongjo', serif;
+    font-size: 1.1rem;
+    letter-spacing: 4px;
+    z-index: 1;
+  }
+
+  @media (max-width: 720px) {
+    header h1 { font-size: 2.8rem; letter-spacing: 8px; }
+    .form-row, .form-row-3 { grid-template-columns: 1fr; }
+    section { padding: 24px; }
+    .daily-item { grid-template-columns: 60px 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 배경음악 컨트롤 -->
+<div class="music-box" id="musicBox" onclick="toggleMusic()">
+  <span class="music-icon paused" id="musicIcon">🎵</span>
+  <span id="musicText">배경음악 켜기</span>
+</div>
+
+<!-- 헤더 -->
+<header>
+  <h1>블 스</h1>
+  <p class="subtitle">책 한 권, 커피 한 잔, 그리고 우리</p>
+  <p class="quote">"한 권의 책은 한 사람의 인생이고, 함께 읽은 책은 우리들의 추억이 된다."</p>
+</header>
+
+<!-- 네비게이션 -->
+<nav>
+  <ul>
+    <li><a href="#reviews">📖 감상문</a></li>
+    <li><a href="#recommend">⭐ 추천 도서</a></li>
+    <li><a href="#daily">☕ 일상 나눔</a></li>
+    <li><a href="#fee">💰 회비 정산</a></li>
+  </ul>
+</nav>
+
+<main>
+
+  <!-- 창문 데코 -->
+  <div class="window-deco">
+    <span>오늘도 좋은 책과 함께</span>
+  </div>
+
+  <!-- 1. 감상문 섹션 -->
+  <section id="reviews">
+    <h2><span class="icon">📖</span> 회원별 독서 감상문</h2>
+    <p class="section-desc">날짜별로 읽은 책의 감상을 회원들과 함께 나누어 보세요.</p>
+
+    <div class="review-grid" id="reviewGrid">
+      <div class="review-card">
+        <div class="review-meta"><span>2026.04.15</span><span>📚 4월 정기</span></div>
+        <h3>여름은 오래 그곳에 남아</h3>
+        <div class="author">마쓰이에 마사시 / 비채</div>
+        <p>건축가의 산장에서 보낸 한 여름. 천천히 흘러가는 시간 속에서 진짜 중요한 것이 무엇인지 다시 생각하게 되었습니다. 페이지마다 햇살과 바람이 느껴지는 책이었어요.</p>
+        <div class="member">— 지영 ✿</div>
+      </div>
+      <div class="review-card">
+        <div class="review-meta"><span>2026.04.08</span><span>📚 자유 독서</span></div>
+        <h3>달러구트 꿈 백화점</h3>
+        <div class="author">이미예 / 팩토리나인</div>
+        <p>잠든 사이 우리가 사는 꿈을 파는 백화점이라니. 따뜻하고 동화같은 상상력에 마음이 말랑해졌어요.</p>
+        <div class="member">— 민호 ☕</div>
+      </div>
+      <div class="review-card">
+        <div class="review-meta"><span>2026.04.01</span><span>📚 시 모음</span></div>
+        <h3>꽃을 보듯 너를 본다</h3>
+        <div class="author">나태주 / 지혜</div>
+        <p>"자세히 보아야 예쁘다, 오래 보아야 사랑스럽다." 한 줄 한 줄 음미하며 봄을 닮은 시를 읽었습니다.</p>
+        <div class="member">— 수진 🌸</div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:30px; color:#5a3e22;">✍ 새 감상문 올리기</h3>
+    <form onsubmit="addReview(event)">
+      <div class="form-row">
+        <input type="text" id="r-name" placeholder="회원 이름" required>
+        <input type="date" id="r-date" required>
+      </div>
+      <div class="form-row">
+        <input type="text" id="r-book" placeholder="책 제목" required>
+        <input type="text" id="r-author" placeholder="저자 / 출판사">
+      </div>
+      <textarea id="r-content" placeholder="감상을 자유롭게 적어주세요..." required></textarea>
+      <button type="submit">감상문 올리기</button>
+    </form>
+  </section>
+
+  <!-- 2. 추천도서 -->
+  <section id="recommend">
+    <h2><span class="icon">⭐</span> 회원이 추천하는 도서</h2>
+    <p class="section-desc">서로에게 권하고 싶은 좋은 책을 자유롭게 올려주세요.</p>
+
+    <div class="book-grid" id="bookGrid">
+      <div class="book-card">
+        <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
+        <div class="book-cover" style="background:linear-gradient(135deg,#a87b3e,#5a3e22)">불편한<br>편의점</div>
+        <h4>불편한 편의점</h4>
+        <div class="book-author">김호연</div>
+        <div class="book-comment">"따뜻한 사람들이 있는 편의점, 마음이 환해져요."</div>
+        <span class="recommender">지영 추천</span>
+      </div>
+      <div class="book-card">
+        <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
+        <div class="book-cover" style="background:linear-gradient(135deg,#7a8c5f,#3e5a3a)">미드나잇<br>라이브러리</div>
+        <h4>미드나잇 라이브러리</h4>
+        <div class="book-author">매트 헤이그</div>
+        <div class="book-comment">"인생의 후회를 다시 살아볼 수 있다면?"</div>
+        <span class="recommender">민호 추천</span>
+      </div>
+      <div class="book-card">
+        <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
+        <div class="book-cover" style="background:linear-gradient(135deg,#b04a3a,#6a2a1e)">아몬드</div>
+        <h4>아몬드</h4>
+        <div class="book-author">손원평</div>
+        <div class="book-comment">"감정을 모르는 소년이 배워가는 사랑."</div>
+        <span class="recommender">수진 추천</span>
+      </div>
+    </div>
+
+    <h3 style="margin-top:30px; color:#5a3e22;">✍ 새 추천 도서 올리기</h3>
+    <form onsubmit="addBook(event)">
+      <div class="form-row">
+        <input type="text" id="b-title" placeholder="책 제목" required>
+        <input type="text" id="b-author" placeholder="저자" required>
+      </div>
+      <div class="form-row">
+        <input type="text" id="b-recommender" placeholder="추천 회원" required>
+        <select id="b-color">
+          <option value="135deg,#a87b3e,#5a3e22">갈색 표지</option>
+          <option value="135deg,#7a8c5f,#3e5a3a">초록 표지</option>
+          <option value="135deg,#b04a3a,#6a2a1e">붉은 표지</option>
+          <option value="135deg,#5e6a8c,#2e3a5c">남색 표지</option>
+          <option value="135deg,#c9a878,#8b6f47">베이지 표지</option>
+          <option value="135deg,#8a5a8c,#4a2a5c">자주 표지</option>
+        </select>
+      </div>
+      <textarea id="b-comment" placeholder="이 책을 추천하는 한 마디..." required></textarea>
+      <button type="submit">추천 도서 올리기</button>
+    </form>
+  </section>
+
+  <!-- 3. 일상 나눔 -->
+  <section id="daily">
+    <h2><span class="icon">☕</span> 오늘의 일상 나눔</h2>
+    <p class="section-desc">책 너머 우리들의 소소한 하루를 공유합니다.</p>
+
+    <div class="daily-list" id="dailyList">
+      <div class="daily-item">
+        <div class="daily-emoji">☕</div>
+        <div class="daily-content">
+          <div class="daily-meta"><strong>지영</strong> · 2026.04.28</div>
+          <p>오랜만에 들른 동네 카페에서 햇살 좋은 자리에 앉아 책을 읽었어요. 이런 평범한 오후가 제일 행복한 것 같아요.</p>
+        </div>
+      </div>
+      <div class="daily-item">
+        <div class="daily-emoji">🌷</div>
+        <div class="daily-content">
+          <div class="daily-meta"><strong>수진</strong> · 2026.04.27</div>
+          <p>출근길에 핀 튤립을 보고 봄이 다 가기 전에 한 번 더 꽃놀이 가야겠다고 다짐했답니다.</p>
+        </div>
+      </div>
+      <div class="daily-item">
+        <div class="daily-emoji">🪟</div>
+        <div class="daily-content">
+          <div class="daily-meta"><strong>민호</strong> · 2026.04.25</div>
+          <p>비 오는 창가에서 듣는 빗소리가 오늘은 유난히 좋네요. 따뜻한 차 한 잔에 책 한 권이면 완벽한 하루입니다.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top:30px; color:#5a3e22;">✍ 오늘 하루 나누기</h3>
+    <form onsubmit="addDaily(event)">
+      <div class="form-row">
+        <input type="text" id="d-name" placeholder="회원 이름" required>
+        <select id="d-emoji">
+          <option value="☕">☕ 카페</option>
+          <option value="📚">📚 책</option>
+          <option value="🌷">🌷 자연</option>
+          <option value="🪟">🪟 풍경</option>
+          <option value="👓">👓 일상</option>
+          <option value="🍰">🍰 음식</option>
+          <option value="🎵">🎵 음악</option>
+        </select>
+      </div>
+      <textarea id="d-content" placeholder="오늘 어떤 하루를 보내셨나요?" required></textarea>
+      <button type="submit">일상 나누기</button>
+    </form>
+  </section>
+
+  <!-- 4. 회비 정산 -->
+  <section id="fee">
+    <h2><span class="icon">💰</span> 모임 회비 정산</h2>
+    <p class="section-desc">투명하게 공유되는 우리 모임의 회비 내역입니다. 지난 내역은 ✕ 버튼으로 삭제할 수 있어요.</p>
+
+    <div class="fee-summary">
+      <div class="summary-card">
+        <div class="label">현재 잔액</div>
+        <div class="value" id="balance">0원</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">총 수입</div>
+        <div class="value" id="incomeTotal" style="color:#4a7a3a">0원</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">총 지출</div>
+        <div class="value" id="expenseTotal" style="color:#b04a2e">0원</div>
+      </div>
+      <div class="summary-card">
+        <div class="label">전체 내역</div>
+        <div class="value" id="entryCount">0건</div>
+      </div>
+    </div>
+
+    <table id="feeTable">
+      <thead>
+        <tr>
+          <th>날짜</th>
+          <th>내용</th>
+          <th>회원</th>
+          <th style="text-align:right">금액</th>
+          <th style="text-align:center">삭제</th>
+        </tr>
+      </thead>
+      <tbody id="feeTbody">
+        <!-- 자바스크립트로 채워짐 -->
+      </tbody>
+    </table>
+
+    <div style="margin-top:14px; text-align:right;">
+      <button type="button" onclick="clearAllFees()" style="background:#a04a30;">전체 내역 삭제</button>
+    </div>
+
+    <h3 style="margin-top:30px; color:#5a3e22;">✍ 회비 내역 추가</h3>
+    <form onsubmit="addFee(event)">
+      <div class="form-row">
+        <input type="date" id="f-date" required>
+        <input type="text" id="f-name" placeholder="회원 이름" required>
+      </div>
+      <div class="form-row">
+        <input type="text" id="f-desc" placeholder="내용 (예: 5월 회비)" required>
+        <input type="number" id="f-amount" placeholder="금액 (지출은 - 부호로)" required>
+      </div>
+      <button type="submit">정산 내역 추가</button>
+    </form>
+  </section>
+
+</main>
+
+<footer>
+  <div class="icons">📖 ☕ 👓 🪟 🌿</div>
+  <p><strong>블 스</strong> · 함께 읽고, 함께 자라는 우리들의 독서 모임</p>
+  <p style="opacity:.7;font-size:.9rem;margin-top:8px;">© 2026 블스 독서 모임 · Made with ♥</p>
+</footer>
+
+<script>
+  // ===== 배경음악 (Web Audio API로 직접 생성 - 잔잔한 피아노 화음) =====
+  let audioCtx = null;
+  let musicNodes = [];
+  let musicTimer = null;
+  let playing = false;
+
+  const icon = document.getElementById('musicIcon');
+  const text = document.getElementById('musicText');
+
+  // 잔잔한 코드 진행 (C major - Am - F - G 의 변형, 부드러운 화음)
+  // 주파수 (Hz): C4=261.63, E4=329.63, G4=392, A4=440, F4=349.23, D4=293.66, B3=246.94
+  const chords = [
+    [261.63, 329.63, 392.00],   // C major
+    [220.00, 261.63, 329.63],   // A minor
+    [174.61, 220.00, 261.63],   // F major
+    [196.00, 246.94, 293.66],   // G major
+    [261.63, 329.63, 392.00],   // C major
+    [233.08, 293.66, 349.23],   // Bb major (감미로움)
+    [196.00, 246.94, 293.66],   // G major
+    [220.00, 261.63, 329.63],   // A minor
+  ];
+
+  function playNote(freq, startTime, duration, gain = 0.08) {
+    const osc = audioCtx.createOscillator();
+    const env = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+
+    // ADSR 부드러운 페이드 인/아웃
+    env.gain.setValueAtTime(0, startTime);
+    env.gain.linearRampToValueAtTime(gain, startTime + 0.6);
+    env.gain.linearRampToValueAtTime(gain * 0.6, startTime + duration * 0.6);
+    env.gain.linearRampToValueAtTime(0, startTime + duration);
+
+    osc.connect(env);
+    env.connect(audioCtx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration);
+    musicNodes.push(osc);
+  }
+
+  let chordIndex = 0;
+  function scheduleChords() {
+    const now = audioCtx.currentTime;
+    const chordDuration = 4; // 한 코드 4초
+    // 다음 2개 코드를 미리 스케줄
+    for (let i = 0; i < 2; i++) {
+      const chord = chords[chordIndex % chords.length];
+      const startTime = now + i * chordDuration;
+      chord.forEach((freq, idx) => {
+        // 각 음 약간 지연시키며 (아르페지오 느낌)
+        playNote(freq, startTime + idx * 0.15, chordDuration - 0.2, 0.06);
+        // 옥타브 위 약하게 (반짝임)
+        playNote(freq * 2, startTime + idx * 0.3 + 0.5, chordDuration - 0.5, 0.025);
+      });
+      chordIndex++;
+    }
+  }
+
+  function toggleMusic() {
+    if (!playing) {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      chordIndex = 0;
+      scheduleChords();
+      // 8초마다 다음 코드 스케줄
+      musicTimer = setInterval(scheduleChords, 8000);
+
+      icon.classList.remove('paused');
+      text.textContent = '배경음악 끄기';
+      playing = true;
+    } else {
+      if (musicTimer) clearInterval(musicTimer);
+      musicTimer = null;
+      // 모든 노드 즉시 중지
+      musicNodes.forEach(n => { try { n.stop(); } catch(e){} });
+      musicNodes = [];
+      if (audioCtx) audioCtx.suspend();
+
+      icon.classList.add('paused');
+      text.textContent = '배경음악 켜기';
+      playing = false;
+    }
+  }
+
+  // ===== 감상문 추가 =====
+  function addReview(e) {
+    e.preventDefault();
+    const name = document.getElementById('r-name').value;
+    const date = document.getElementById('r-date').value.replace(/-/g, '.');
+    const book = document.getElementById('r-book').value;
+    const author = document.getElementById('r-author').value || '저자 미상';
+    const content = document.getElementById('r-content').value;
+
+    const card = document.createElement('div');
+    card.className = 'review-card';
+    card.innerHTML = `
+      <div class="review-meta"><span>${date}</span><span>📚 신규</span></div>
+      <h3>${book}</h3>
+      <div class="author">${author}</div>
+      <p>${content}</p>
+      <div class="member">— ${name} ✿</div>
+    `;
+    document.getElementById('reviewGrid').prepend(card);
+    e.target.reset();
+  }
+
+  // ===== 추천 도서 추가 =====
+  function addBook(e) {
+    e.preventDefault();
+    const title = document.getElementById('b-title').value;
+    const author = document.getElementById('b-author').value;
+    const recommender = document.getElementById('b-recommender').value;
+    const color = document.getElementById('b-color').value;
+    const comment = document.getElementById('b-comment').value;
+
+    // 표지 텍스트는 제목을 적절히 줄바꿈
+    const coverText = title.length > 8 ? title.match(/.{1,4}/g).join('<br>') : title;
+
+    const card = document.createElement('div');
+    card.className = 'book-card';
+    card.innerHTML = `
+      <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
+      <div class="book-cover" style="background:linear-gradient(${color})">${coverText}</div>
+      <h4>${title}</h4>
+      <div class="book-author">${author}</div>
+      <div class="book-comment">"${comment}"</div>
+      <span class="recommender">${recommender} 추천</span>
+    `;
+    document.getElementById('bookGrid').appendChild(card);
+    e.target.reset();
+  }
+
+  // ===== 일상 추가 =====
+  function addDaily(e) {
+    e.preventDefault();
+    const name = document.getElementById('d-name').value;
+    const emoji = document.getElementById('d-emoji').value;
+    const content = document.getElementById('d-content').value;
+    const today = new Date().toISOString().slice(0,10).replace(/-/g, '.');
+
+    const item = document.createElement('div');
+    item.className = 'daily-item';
+    item.innerHTML = `
+      <div class="daily-emoji">${emoji}</div>
+      <div class="daily-content">
+        <div class="daily-meta"><strong>${name}</strong> · ${today}</div>
+        <p>${content}</p>
+      </div>
+    `;
+    document.getElementById('dailyList').prepend(item);
+    e.target.reset();
+  }
+
+  // ===== 회비 관리 (배열로 상태 관리, 삭제 가능) =====
+  let feeRecords = [
+    { date: '2026.04.15', desc: '4월 회비', name: '지영', amount: 50000 },
+    { date: '2026.04.15', desc: '4월 회비', name: '민호', amount: 50000 },
+    { date: '2026.04.15', desc: '4월 회비', name: '수진', amount: 50000 },
+    { date: '2026.04.15', desc: '4월 회비', name: '현우', amount: 50000 },
+    { date: '2026.04.15', desc: '4월 회비', name: '유진', amount: 50000 },
+    { date: '2026.04.15', desc: '모임 카페 (정기)', name: '공동', amount: -42000 },
+    { date: '2026.04.20', desc: '다과 구입', name: '지영', amount: -18000 },
+    { date: '2026.04.22', desc: '도서 구입(공용)', name: '현우', amount: -8000 },
+  ];
+
+  function renderFees() {
+    const tbody = document.getElementById('feeTbody');
+    tbody.innerHTML = '';
+    let income = 0, expense = 0;
+
+    feeRecords.forEach((r, idx) => {
+      if (r.amount >= 0) income += r.amount;
+      else expense += r.amount;
+
+      const sign = r.amount >= 0 ? '+' : '';
+      const cls = r.amount >= 0 ? 'positive' : 'negative';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${r.desc}</td>
+        <td>${r.name}</td>
+        <td class="amount ${cls}">${sign}${r.amount.toLocaleString()}</td>
+        <td class="action-cell"><button class="delete-btn" onclick="deleteFee(${idx})">✕ 삭제</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('balance').textContent = (income + expense).toLocaleString() + '원';
+    document.getElementById('incomeTotal').textContent = '+' + income.toLocaleString() + '원';
+    document.getElementById('expenseTotal').textContent = expense.toLocaleString() + '원';
+    document.getElementById('entryCount').textContent = feeRecords.length + '건';
+  }
+
+  function deleteFee(idx) {
+    if (confirm('이 정산 내역을 삭제하시겠습니까?')) {
+      feeRecords.splice(idx, 1);
+      renderFees();
+    }
+  }
+
+  function clearAllFees() {
+    if (confirm('전체 정산 내역을 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) {
+      feeRecords = [];
+      renderFees();
+    }
+  }
+
+  function addFee(e) {
+    e.preventDefault();
+    const date = document.getElementById('f-date').value.replace(/-/g, '.');
+    const name = document.getElementById('f-name').value;
+    const desc = document.getElementById('f-desc').value;
+    const amount = parseInt(document.getElementById('f-amount').value);
+
+    feeRecords.push({ date, desc, name, amount });
+    renderFees();
+    e.target.reset();
+  }
+
+  // 초기 회비 표 렌더링
+  renderFees();
+
+  // ===== 부드러운 스크롤 =====
+  document.querySelectorAll('nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+</body>
+</html>
