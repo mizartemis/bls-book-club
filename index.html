@@ -123,7 +123,7 @@
   .review-card .member { margin-top: 14px; text-align: right; font-size: .88rem; color: #8b6f47; font-weight: 700; }
   .card-actions {
     display: flex; gap: 6px; margin-top: 12px; justify-content: flex-end;
-    position: relative; z-index: 1;
+    position: relative; z-index: 1; flex-wrap: wrap;
   }
   .icon-btn {
     background: #fdf6e8; border: 1px solid #b08956; color: #5a3e22;
@@ -133,6 +133,13 @@
   .icon-btn:hover { background: #b08956; color: #fff8ec; }
   .icon-btn.danger { border-color: #c47a5e; color: #a04a30; }
   .icon-btn.danger:hover { background: #a04a30; color: #fff; }
+  .icon-btn.share { border-color: #6a8c5e; color: #3e5a3a; }
+  .icon-btn.share:hover { background: #6a8c5e; color: #fff8ec; }
+
+  .share-flash {
+    box-shadow: 0 0 0 3px #b08956, 0 0 24px rgba(176,137,86,.6) !important;
+    transition: box-shadow .6s;
+  }
 
   form {
     display: grid; gap: 12px; margin-top: 24px;
@@ -219,7 +226,7 @@
   td.amount { font-weight: 700; color: #5a3e22; text-align: right; }
   td.amount.negative { color: #b04a2e; }
   td.amount.positive { color: #4a7a3a; }
-  td.action-cell { text-align: center; width: 140px; white-space: nowrap; }
+  td.action-cell { text-align: center; width: 160px; white-space: nowrap; }
 
   /* 모달 (편집용) */
   .modal-overlay {
@@ -249,13 +256,6 @@
   }
   footer p { margin: 6px 0; }
   footer .icons { font-size: 1.5rem; letter-spacing: 12px; margin-bottom: 14px; }
-  .footer-actions { margin-top: 14px; }
-  .footer-actions button {
-    background: #8b6f47; color: #fff8ec; border: 1px solid #c9a878;
-    padding: 8px 16px; border-radius: 8px; cursor: pointer; font-family: inherit;
-    margin: 0 4px; font-size: .85rem;
-  }
-  .footer-actions button:hover { background: #5a3e22; }
 
   .window-deco {
     position: relative;
@@ -283,6 +283,16 @@
     opacity: 0; transition: opacity .3s; pointer-events: none;
   }
   .toast.show { opacity: 1; }
+
+  .setup-banner {
+    background: #ffe69b; color: #5a3e22; padding: 14px 24px;
+    text-align: center; font-weight: 700; border-bottom: 2px solid #b08956;
+    line-height: 1.6;
+  }
+  .setup-banner code {
+    background: #fff8ec; padding: 2px 8px; border-radius: 4px;
+    font-family: 'Consolas', monospace; font-size: .9em;
+  }
 
   @media (max-width: 720px) {
     header h1 { font-size: 2.8rem; letter-spacing: 8px; }
@@ -330,7 +340,7 @@
   <!-- 1. 감상문 -->
   <section id="reviews">
     <h2><span class="icon">📖</span> 회원별 독서 감상문</h2>
-    <p class="section-desc">날짜별로 읽은 책의 감상을 회원들과 함께 나누어 보세요. 글은 자동 저장됩니다.</p>
+    <p class="section-desc">날짜별로 읽은 책의 감상을 회원들과 함께 나누어 보세요. 모든 글은 Supabase에 저장됩니다.</p>
     <div class="review-grid" id="reviewGrid"></div>
 
     <h3 style="margin-top:30px; color:#5a3e22;">✍ 새 감상문 올리기</h3>
@@ -404,7 +414,7 @@
   <!-- 4. 회비 -->
   <section id="fee">
     <h2><span class="icon">💰</span> 모임 회비 정산</h2>
-    <p class="section-desc">투명하게 공유되는 우리 모임의 회비 내역입니다. ✏ 수정과 ✕ 삭제가 가능합니다.</p>
+    <p class="section-desc">투명하게 공유되는 우리 모임의 회비 내역입니다. ✏ 수정과 ✕ 삭제, 🔗 공유가 가능합니다.</p>
 
     <div class="fee-summary">
       <div class="summary-card"><div class="label">현재 잔액</div><div class="value" id="balance">0원</div></div>
@@ -460,84 +470,67 @@
   <div class="icons">📖 ☕ 👓 🪟 🌿</div>
   <p><strong>블 스</strong> · 함께 읽고, 함께 자라는 우리들의 독서 모임</p>
   <p style="opacity:.7;font-size:.9rem;margin-top:8px;">© 2026 블스 독서 모임 · Made with ♥</p>
-  <div class="footer-actions">
-    <button onclick="exportData()">📥 데이터 내보내기 (백업)</button>
-    <button onclick="document.getElementById('importFile').click()">📤 데이터 불러오기</button>
-    <button onclick="resetAll()" style="background:#a04a30;">🗑 모든 기록 초기화</button>
-    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-  </div>
-  <p style="opacity:.5;font-size:.78rem;margin-top:14px;">데이터는 이 브라우저(localStorage)에 저장됩니다. 다른 기기에서 보려면 백업 파일을 옮기세요.</p>
+  <p style="opacity:.5;font-size:.78rem;margin-top:14px;">데이터는 Supabase에 저장되어 모든 회원이 함께 보고 수정할 수 있습니다.</p>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  /* ==================== 데이터 영속화 ==================== */
-  const STORAGE_KEY = 'bls-book-club-data-v1';
+  /* ==================== Supabase 설정 ==================== */
+  // ↓↓↓ 본인의 Supabase 프로젝트 정보로 교체하세요 ↓↓↓
+  // (Project Settings → API → Project URL / anon public key)
+  const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+  const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 
-  const seedData = {
-    reviews: [
-      { id: 'seed-r1', date: '2026-04-15', name: '지영', book: '여름은 오래 그곳에 남아',
-        author: '마쓰이에 마사시 / 비채',
-        content: '건축가의 산장에서 보낸 한 여름. 천천히 흘러가는 시간 속에서 진짜 중요한 것이 무엇인지 다시 생각하게 되었습니다. 페이지마다 햇살과 바람이 느껴지는 책이었어요.', tag: '4월 정기' },
-      { id: 'seed-r2', date: '2026-04-08', name: '민호', book: '달러구트 꿈 백화점',
-        author: '이미예 / 팩토리나인',
-        content: '잠든 사이 우리가 사는 꿈을 파는 백화점이라니. 따뜻하고 동화같은 상상력에 마음이 말랑해졌어요.', tag: '자유 독서' },
-      { id: 'seed-r3', date: '2026-04-01', name: '수진', book: '꽃을 보듯 너를 본다',
-        author: '나태주 / 지혜',
-        content: '"자세히 보아야 예쁘다, 오래 보아야 사랑스럽다." 한 줄 한 줄 음미하며 봄을 닮은 시를 읽었습니다.', tag: '시 모음' },
-    ],
-    books: [
-      { id: 'seed-b1', title: '불편한 편의점', author: '김호연', recommender: '지영',
-        color: '135deg,#a87b3e,#5a3e22', comment: '따뜻한 사람들이 있는 편의점, 마음이 환해져요.' },
-      { id: 'seed-b2', title: '미드나잇 라이브러리', author: '매트 헤이그', recommender: '민호',
-        color: '135deg,#7a8c5f,#3e5a3a', comment: '인생의 후회를 다시 살아볼 수 있다면?' },
-      { id: 'seed-b3', title: '아몬드', author: '손원평', recommender: '수진',
-        color: '135deg,#b04a3a,#6a2a1e', comment: '감정을 모르는 소년이 배워가는 사랑.' },
-    ],
-    daily: [
-      { id: 'seed-d1', name: '지영', date: '2026-04-28', emoji: '☕',
-        content: '오랜만에 들른 동네 카페에서 햇살 좋은 자리에 앉아 책을 읽었어요. 이런 평범한 오후가 제일 행복한 것 같아요.' },
-      { id: 'seed-d2', name: '수진', date: '2026-04-27', emoji: '🌷',
-        content: '출근길에 핀 튤립을 보고 봄이 다 가기 전에 한 번 더 꽃놀이 가야겠다고 다짐했답니다.' },
-    ],
-    fees: [
-      { id: 'seed-f1', date: '2026-04-15', desc: '4월 회비', name: '지영', amount: 50000 },
-      { id: 'seed-f2', date: '2026-04-15', desc: '4월 회비', name: '민호', amount: 50000 },
-      { id: 'seed-f3', date: '2026-04-15', desc: '4월 회비', name: '수진', amount: 50000 },
-      { id: 'seed-f4', date: '2026-04-15', desc: '4월 회비', name: '현우', amount: 50000 },
-      { id: 'seed-f5', date: '2026-04-15', desc: '모임 카페 (정기)', name: '공동', amount: -42000 },
-      { id: 'seed-f6', date: '2026-04-20', desc: '다과 구입', name: '지영', amount: -18000 },
-    ],
-  };
+  const isConfigured =
+    !SUPABASE_URL.startsWith('YOUR_') && !SUPABASE_ANON_KEY.startsWith('YOUR_');
+  const sb = isConfigured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-  let data = loadData();
+  let data = { reviews: [], books: [], daily: [], fees: [] };
 
-  function loadData() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return JSON.parse(raw);
-    } catch (e) { console.warn('load failed', e); }
-    return JSON.parse(JSON.stringify(seedData));
-  }
-  function saveData() {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e) {
-      showToast('저장 실패: 저장 공간이 부족합니다');
-    }
-  }
+  /* ==================== 공통 유틸 ==================== */
   function newId() { return 'id-' + Date.now() + '-' + Math.random().toString(36).slice(2,7); }
-
   function escapeHtml(s) {
     return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
   function formatDate(d) { return (d || '').replace(/-/g, '.'); }
-
   function showToast(msg) {
     const t = document.getElementById('toast');
     t.textContent = msg;
     t.classList.add('show');
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(() => t.classList.remove('show'), 2200);
+    showToast._t = setTimeout(() => t.classList.remove('show'), 2400);
+  }
+  function showSetupBanner() {
+    const banner = document.createElement('div');
+    banner.className = 'setup-banner';
+    banner.innerHTML =
+      '⚠ Supabase 설정이 필요합니다. <code>index.html</code> 안의 ' +
+      '<code>SUPABASE_URL</code>과 <code>SUPABASE_ANON_KEY</code>를 본인 프로젝트 값으로 입력하세요.';
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+
+  /* ==================== Supabase 데이터 로드 ==================== */
+  async function loadAllFromDb() {
+    if (!sb) { showSetupBanner(); return; }
+    try {
+      const [reviews, books, daily, fees] = await Promise.all([
+        sb.from('reviews').select('*'),
+        sb.from('books').select('*'),
+        sb.from('daily').select('*'),
+        sb.from('fees').select('*'),
+      ]);
+      const err = [reviews.error, books.error, daily.error, fees.error].find(Boolean);
+      if (err) throw err;
+      data.reviews = reviews.data || [];
+      data.books   = books.data   || [];
+      data.daily   = daily.data   || [];
+      data.fees    = fees.data    || [];
+      renderAll();
+      scrollToHash();
+    } catch (e) {
+      console.error(e);
+      showToast('데이터 로드 실패: ' + (e.message || e));
+    }
   }
 
   /* ==================== 렌더링 ==================== */
@@ -552,6 +545,7 @@
     sorted.forEach(r => {
       const card = document.createElement('div');
       card.className = 'review-card';
+      card.id = `review-${r.id}`;
       card.dataset.search = `${r.name} ${r.book} ${r.author} ${r.content}`.toLowerCase();
       card.innerHTML = `
         <div class="review-meta"><span>${formatDate(r.date)}</span><span>📚 ${escapeHtml(r.tag || '독서')}</span></div>
@@ -560,6 +554,7 @@
         <p>${escapeHtml(r.content)}</p>
         <div class="member">— ${escapeHtml(r.name)} ✿</div>
         <div class="card-actions">
+          <button class="icon-btn share" onclick="shareItem('review','${r.id}')">🔗 공유</button>
           <button class="icon-btn" onclick="editReview('${r.id}')">✏ 수정</button>
           <button class="icon-btn danger" onclick="deleteReview('${r.id}')">✕ 삭제</button>
         </div>`;
@@ -579,6 +574,7 @@
       const coverText = b.title.length > 8 ? b.title.match(/.{1,4}/g).join('<br>') : b.title;
       const card = document.createElement('div');
       card.className = 'book-card';
+      card.id = `book-${b.id}`;
       card.dataset.search = `${b.title} ${b.author} ${b.recommender} ${b.comment}`.toLowerCase();
       card.innerHTML = `
         <div class="book-cover" style="background:linear-gradient(${b.color})">${escapeHtml(coverText).replace(/&lt;br&gt;/g,'<br>')}</div>
@@ -587,6 +583,7 @@
         <div class="book-comment">"${escapeHtml(b.comment)}"</div>
         <span class="recommender">${escapeHtml(b.recommender)} 추천</span>
         <div class="card-actions" style="justify-content:center; margin-top:10px;">
+          <button class="icon-btn share" onclick="shareItem('book','${b.id}')">🔗 공유</button>
           <button class="icon-btn" onclick="editBook('${b.id}')">✏ 수정</button>
           <button class="icon-btn danger" onclick="deleteBook('${b.id}')">✕ 삭제</button>
         </div>`;
@@ -606,6 +603,7 @@
     sorted.forEach(d => {
       const item = document.createElement('div');
       item.className = 'daily-item';
+      item.id = `daily-${d.id}`;
       item.dataset.search = `${d.name} ${d.content}`.toLowerCase();
       item.innerHTML = `
         <div class="daily-emoji">${d.emoji}</div>
@@ -613,6 +611,7 @@
           <div class="daily-meta"><strong>${escapeHtml(d.name)}</strong> · ${formatDate(d.date)}</div>
           <p>${escapeHtml(d.content)}</p>
           <div class="card-actions">
+            <button class="icon-btn share" onclick="shareItem('daily','${d.id}')">🔗 공유</button>
             <button class="icon-btn" onclick="editDaily('${d.id}')">✏ 수정</button>
             <button class="icon-btn danger" onclick="deleteDaily('${d.id}')">✕ 삭제</button>
           </div>
@@ -635,15 +634,17 @@
         const sign = r.amount >= 0 ? '+' : '';
         const cls = r.amount >= 0 ? 'positive' : 'negative';
         const tr = document.createElement('tr');
-        tr.dataset.search = `${r.name} ${r.desc} ${r.date}`.toLowerCase();
+        tr.id = `fee-${r.id}`;
+        tr.dataset.search = `${r.name} ${r.description} ${r.date}`.toLowerCase();
         tr.innerHTML = `
           <td>${formatDate(r.date)}</td>
-          <td>${escapeHtml(r.desc)}</td>
+          <td>${escapeHtml(r.description)}</td>
           <td>${escapeHtml(r.name)}</td>
           <td class="amount ${cls}">${sign}${r.amount.toLocaleString()}</td>
           <td class="action-cell">
-            <button class="icon-btn" onclick="editFee('${r.id}')">✏</button>
-            <button class="icon-btn danger" onclick="deleteFee('${r.id}')">✕</button>
+            <button class="icon-btn share" onclick="shareItem('fee','${r.id}')" title="공유">🔗</button>
+            <button class="icon-btn" onclick="editFee('${r.id}')" title="수정">✏</button>
+            <button class="icon-btn danger" onclick="deleteFee('${r.id}')" title="삭제">✕</button>
           </td>`;
         tbody.appendChild(tr);
       });
@@ -659,10 +660,11 @@
     renderReviews(); renderBooks(); renderDaily(); renderFees();
   }
 
-  /* ==================== 추가 ==================== */
-  function addReview(e) {
+  /* ==================== 추가 (Supabase insert) ==================== */
+  async function addReview(e) {
     e.preventDefault();
-    data.reviews.push({
+    if (!sb) return showToast('Supabase 설정이 필요합니다');
+    const row = {
       id: newId(),
       name: document.getElementById('r-name').value.trim(),
       date: document.getElementById('r-date').value,
@@ -670,78 +672,103 @@
       author: document.getElementById('r-author').value.trim() || '저자 미상',
       content: document.getElementById('r-content').value.trim(),
       tag: '신규',
-    });
-    saveData(); renderReviews(); e.target.reset();
+    };
+    const { error } = await sb.from('reviews').insert(row);
+    if (error) return showToast('저장 실패: ' + error.message);
+    data.reviews.push(row);
+    renderReviews(); e.target.reset();
     showToast('감상문이 저장되었습니다 ✿');
   }
-  function addBook(e) {
+  async function addBook(e) {
     e.preventDefault();
-    data.books.push({
+    if (!sb) return showToast('Supabase 설정이 필요합니다');
+    const row = {
       id: newId(),
       title: document.getElementById('b-title').value.trim(),
       author: document.getElementById('b-author').value.trim(),
       recommender: document.getElementById('b-recommender').value.trim(),
       color: document.getElementById('b-color').value,
       comment: document.getElementById('b-comment').value.trim(),
-    });
-    saveData(); renderBooks(); e.target.reset();
+    };
+    const { error } = await sb.from('books').insert(row);
+    if (error) return showToast('저장 실패: ' + error.message);
+    data.books.push(row);
+    renderBooks(); e.target.reset();
     showToast('추천 도서가 저장되었습니다 ⭐');
   }
-  function addDaily(e) {
+  async function addDaily(e) {
     e.preventDefault();
+    if (!sb) return showToast('Supabase 설정이 필요합니다');
     const today = new Date().toISOString().slice(0,10);
-    data.daily.push({
+    const row = {
       id: newId(),
       name: document.getElementById('d-name').value.trim(),
       emoji: document.getElementById('d-emoji').value,
       date: today,
       content: document.getElementById('d-content').value.trim(),
-    });
-    saveData(); renderDaily(); e.target.reset();
+    };
+    const { error } = await sb.from('daily').insert(row);
+    if (error) return showToast('저장 실패: ' + error.message);
+    data.daily.push(row);
+    renderDaily(); e.target.reset();
     showToast('일상이 저장되었습니다 ☕');
   }
-  function addFee(e) {
+  async function addFee(e) {
     e.preventDefault();
-    data.fees.push({
+    if (!sb) return showToast('Supabase 설정이 필요합니다');
+    const row = {
       id: newId(),
       date: document.getElementById('f-date').value,
       name: document.getElementById('f-name').value.trim(),
-      desc: document.getElementById('f-desc').value.trim(),
+      description: document.getElementById('f-desc').value.trim(),
       amount: parseInt(document.getElementById('f-amount').value),
-    });
-    saveData(); renderFees(); e.target.reset();
+    };
+    const { error } = await sb.from('fees').insert(row);
+    if (error) return showToast('저장 실패: ' + error.message);
+    data.fees.push(row);
+    renderFees(); e.target.reset();
     showToast('정산 내역이 저장되었습니다 💰');
   }
 
-  /* ==================== 삭제 ==================== */
-  function deleteReview(id) {
-    if (!confirm('이 감상문을 삭제하시겠습니까?')) return;
+  /* ==================== 삭제 (Supabase delete) ==================== */
+  async function deleteReview(id) {
+    if (!sb || !confirm('이 감상문을 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('reviews').delete().eq('id', id);
+    if (error) return showToast('삭제 실패: ' + error.message);
     data.reviews = data.reviews.filter(r => r.id !== id);
-    saveData(); renderReviews(); showToast('삭제되었습니다');
+    renderReviews(); showToast('삭제되었습니다');
   }
-  function deleteBook(id) {
-    if (!confirm('이 추천 도서를 삭제하시겠습니까?')) return;
+  async function deleteBook(id) {
+    if (!sb || !confirm('이 추천 도서를 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('books').delete().eq('id', id);
+    if (error) return showToast('삭제 실패: ' + error.message);
     data.books = data.books.filter(b => b.id !== id);
-    saveData(); renderBooks(); showToast('삭제되었습니다');
+    renderBooks(); showToast('삭제되었습니다');
   }
-  function deleteDaily(id) {
-    if (!confirm('이 일상 글을 삭제하시겠습니까?')) return;
+  async function deleteDaily(id) {
+    if (!sb || !confirm('이 일상 글을 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('daily').delete().eq('id', id);
+    if (error) return showToast('삭제 실패: ' + error.message);
     data.daily = data.daily.filter(d => d.id !== id);
-    saveData(); renderDaily(); showToast('삭제되었습니다');
+    renderDaily(); showToast('삭제되었습니다');
   }
-  function deleteFee(id) {
-    if (!confirm('이 정산 내역을 삭제하시겠습니까?')) return;
+  async function deleteFee(id) {
+    if (!sb || !confirm('이 정산 내역을 삭제하시겠습니까?')) return;
+    const { error } = await sb.from('fees').delete().eq('id', id);
+    if (error) return showToast('삭제 실패: ' + error.message);
     data.fees = data.fees.filter(f => f.id !== id);
-    saveData(); renderFees(); showToast('삭제되었습니다');
+    renderFees(); showToast('삭제되었습니다');
   }
-  function clearAllFees() {
-    if (!confirm('전체 정산 내역을 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+  async function clearAllFees() {
+    if (!sb || !confirm('전체 정산 내역을 모두 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+    const { error } = await sb.from('fees').delete().neq('id', '');
+    if (error) return showToast('삭제 실패: ' + error.message);
     data.fees = [];
-    saveData(); renderFees(); showToast('회비 내역이 모두 삭제되었습니다');
+    renderFees(); showToast('회비 내역이 모두 삭제되었습니다');
   }
 
-  /* ==================== 수정 (모달) ==================== */
-  let currentEdit = null; // { type, id }
+  /* ==================== 수정 (모달 + Supabase update) ==================== */
+  let currentEdit = null;
 
   function openModal(title, fieldsHtml) {
     document.getElementById('modalTitle').textContent = title;
@@ -825,50 +852,127 @@
         <input type="text" id="m-name" value="${escapeHtml(f.name)}" placeholder="회원 이름" required>
       </div>
       <div class="form-row">
-        <input type="text" id="m-desc" value="${escapeHtml(f.desc)}" placeholder="내용" required>
+        <input type="text" id="m-desc" value="${escapeHtml(f.description)}" placeholder="내용" required>
         <input type="number" id="m-amount" value="${f.amount}" placeholder="금액" required>
       </div>
     `);
   }
 
-  function saveEdit(e) {
+  async function saveEdit(e) {
     e.preventDefault();
-    if (!currentEdit) return;
+    if (!currentEdit || !sb) return;
     const { type, id } = currentEdit;
 
+    let updates, table, target, rerender;
     if (type === 'review') {
-      const r = data.reviews.find(x => x.id === id);
-      r.name = document.getElementById('m-name').value.trim();
-      r.date = document.getElementById('m-date').value;
-      r.book = document.getElementById('m-book').value.trim();
-      r.author = document.getElementById('m-author').value.trim();
-      r.content = document.getElementById('m-content').value.trim();
-      saveData(); renderReviews();
+      updates = {
+        name: document.getElementById('m-name').value.trim(),
+        date: document.getElementById('m-date').value,
+        book: document.getElementById('m-book').value.trim(),
+        author: document.getElementById('m-author').value.trim(),
+        content: document.getElementById('m-content').value.trim(),
+      };
+      table = 'reviews'; target = data.reviews; rerender = renderReviews;
     } else if (type === 'book') {
-      const b = data.books.find(x => x.id === id);
-      b.title = document.getElementById('m-title').value.trim();
-      b.author = document.getElementById('m-author').value.trim();
-      b.recommender = document.getElementById('m-recommender').value.trim();
-      b.color = document.getElementById('m-color').value;
-      b.comment = document.getElementById('m-comment').value.trim();
-      saveData(); renderBooks();
+      updates = {
+        title: document.getElementById('m-title').value.trim(),
+        author: document.getElementById('m-author').value.trim(),
+        recommender: document.getElementById('m-recommender').value.trim(),
+        color: document.getElementById('m-color').value,
+        comment: document.getElementById('m-comment').value.trim(),
+      };
+      table = 'books'; target = data.books; rerender = renderBooks;
     } else if (type === 'daily') {
-      const d = data.daily.find(x => x.id === id);
-      d.name = document.getElementById('m-name').value.trim();
-      d.date = document.getElementById('m-date').value;
-      d.emoji = document.getElementById('m-emoji').value;
-      d.content = document.getElementById('m-content').value.trim();
-      saveData(); renderDaily();
+      updates = {
+        name: document.getElementById('m-name').value.trim(),
+        date: document.getElementById('m-date').value,
+        emoji: document.getElementById('m-emoji').value,
+        content: document.getElementById('m-content').value.trim(),
+      };
+      table = 'daily'; target = data.daily; rerender = renderDaily;
     } else if (type === 'fee') {
-      const f = data.fees.find(x => x.id === id);
-      f.date = document.getElementById('m-date').value;
-      f.name = document.getElementById('m-name').value.trim();
-      f.desc = document.getElementById('m-desc').value.trim();
-      f.amount = parseInt(document.getElementById('m-amount').value);
-      saveData(); renderFees();
+      updates = {
+        date: document.getElementById('m-date').value,
+        name: document.getElementById('m-name').value.trim(),
+        description: document.getElementById('m-desc').value.trim(),
+        amount: parseInt(document.getElementById('m-amount').value),
+      };
+      table = 'fees'; target = data.fees; rerender = renderFees;
     }
+
+    const { error } = await sb.from(table).update(updates).eq('id', id);
+    if (error) return showToast('수정 실패: ' + error.message);
+    Object.assign(target.find(x => x.id === id), updates);
+    rerender();
     closeModal();
     showToast('수정되었습니다 ✓');
+  }
+
+  /* ==================== 공유 ==================== */
+  function shareItem(type, id) {
+    const tableMap = { review: 'reviews', book: 'books', daily: 'daily', fee: 'fees' };
+    const item = data[tableMap[type]].find(x => x.id === id);
+    if (!item) return;
+
+    let title, body;
+    if (type === 'review') {
+      title = `[블스 독서 모임] ${item.name}님의 감상문 — ${item.book}`;
+      body  = `📖 ${item.book}\n${item.author || ''}\n${formatDate(item.date)}\n\n${item.content}\n\n— ${item.name}`;
+    } else if (type === 'book') {
+      title = `[블스 독서 모임] 추천 도서 — ${item.title}`;
+      body  = `⭐ ${item.title}\n저자: ${item.author}\n\n"${item.comment}"\n\n— ${item.recommender} 추천`;
+    } else if (type === 'daily') {
+      title = `[블스 독서 모임] ${item.name}님의 일상`;
+      body  = `${item.emoji} ${item.name} · ${formatDate(item.date)}\n\n${item.content}`;
+    } else if (type === 'fee') {
+      const sign = item.amount >= 0 ? '+' : '';
+      title = `[블스 독서 모임] 회비 내역`;
+      body  = `💰 ${formatDate(item.date)}\n${item.description}\n${item.name}: ${sign}${item.amount.toLocaleString()}원`;
+    }
+
+    const url = window.location.href.split('#')[0] + `#${type}-${id}`;
+    const shareText = `${body}\n\n🔗 ${url}`;
+
+    flashItem(`${type}-${id}`);
+
+    if (navigator.share) {
+      navigator.share({ title, text: shareText, url }).catch(() => {});
+    } else if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(shareText)
+        .then(() => showToast('내용이 클립보드에 복사되었습니다 🔗'))
+        .catch(() => fallbackCopy(shareText));
+    } else {
+      fallbackCopy(shareText);
+    }
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('내용이 복사되었습니다 🔗'); }
+    catch { showToast('복사에 실패했습니다'); }
+    ta.remove();
+  }
+
+  function flashItem(elementId) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.classList.add('share-flash');
+    setTimeout(() => el.classList.remove('share-flash'), 1400);
+  }
+
+  function scrollToHash() {
+    if (!location.hash) return;
+    const el = document.getElementById(location.hash.slice(1));
+    if (el) {
+      setTimeout(() => {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        flashItem(location.hash.slice(1));
+      }, 200);
+    }
   }
 
   /* ==================== 검색 ==================== */
@@ -884,43 +988,6 @@
     applySearch();
   }
   document.getElementById('searchInput').addEventListener('input', applySearch);
-
-  /* ==================== 데이터 백업/복원 ==================== */
-  function exportData() {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `bls-backup-${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    showToast('백업 파일이 다운로드되었습니다');
-  }
-  function importData(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try {
-        const imported = JSON.parse(ev.target.result);
-        if (!imported.reviews || !imported.books || !imported.daily || !imported.fees) {
-          throw new Error('형식이 맞지 않습니다');
-        }
-        if (!confirm('현재 데이터를 백업 파일로 덮어쓰시겠습니까?')) return;
-        data = imported;
-        saveData(); renderAll();
-        showToast('데이터를 불러왔습니다');
-      } catch(err) {
-        alert('파일을 읽을 수 없습니다: ' + err.message);
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  }
-  function resetAll() {
-    if (!confirm('모든 기록을 초기 샘플 데이터로 되돌립니다. 계속하시겠습니까?')) return;
-    data = JSON.parse(JSON.stringify(seedData));
-    saveData(); renderAll();
-    showToast('초기 상태로 되돌렸습니다');
-  }
 
   /* ==================== 배경음악 (Web Audio) ==================== */
   let audioCtx = null, musicNodes = [], musicTimer = null, playing = false;
@@ -985,8 +1052,9 @@
     });
   });
 
-  /* ==================== 초기 렌더 ==================== */
+  /* ==================== 초기화 ==================== */
   renderAll();
+  loadAllFromDb();
 </script>
 </body>
 </html>
